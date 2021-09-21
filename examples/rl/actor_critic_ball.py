@@ -43,12 +43,16 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from examples.rl.env.ball import BallEnv
 
 # Configuration parameters for the whole setup
 seed = 42
 gamma = 0.99  # Discount factor for past rewards
-max_steps_per_episode = 10000
-env = gym.make("CartPole-v0")  # Create the environment
+# max_steps_per_episode = 10000
+max_steps_per_episode = 100
+# env = gym.make("CartPole-v0")  # Create the environment
+# env = gym.make("ball")
+env = BallEnv()
 env.seed(seed)
 eps = np.finfo(np.float32).eps.item()  # Smallest number such that 1.0 + eps != 1.0
 
@@ -65,17 +69,37 @@ an estimate of total rewards in the future.
 In our implementation, they share the initial layer.
 """
 
-num_inputs = 4
-num_actions = 2
-num_hidden = 128
+# num_inputs = 4
+# num_actions = 2
+num_actions = 4
+# num_hidden = 128
+dim_input = [env.space_x_max, env.space_y_max, env.input_num_channel]
+# max_sdev = 5.0
 
-inputs = layers.Input(shape=(num_inputs,))
-common = layers.Dense(num_hidden, activation="relu")(inputs)
-action = layers.Dense(num_actions, activation="softmax")(common)
-critic = layers.Dense(1)(common)
+# inputs = layers.Input(shape=(num_inputs,))
+inputs = layers.Input(shape=dim_input)
+# common = layers.Dense(num_hidden, activation="relu")(inputs)
+common_conv2d_1 = layers.Conv2D(filters=16, kernel_size=8, strides=4, padding="valid", activation="relu")(inputs)
+common_conv2d_2 = layers.Conv2D(filters=32, kernel_size=4, strides=2, padding="valid", activation="relu")(common_conv2d_1)
+common_flatten = layers.Flatten()(common_conv2d_2)
+common_fc_1 = layers.Dense(units=256, activation="relu")(common_flatten)
+common_fc_2 = layers.Dense(units=256, activation="relu")(common_fc_1)
+# action = layers.Dense(num_actions, activation="softmax")(common)
+
+# actor_mean_tanh = layers.Dense(units=2, activation="tanh")(common_fc_2)
+# actor_mean = layers.Rescaling(scale=env.max_force, offset=0.0)(actor_mean_tanh)
+# actor_sdev_sig = layers.Dense(units=2, activation="sigmoid")(common_fc_2)
+# actor_sdev = layers.Rescaling(scale=max_sdev, offset=0.0)(actor_sdev_sig)
+# action = extract(action_mean, action_sdev)
+action = layers.Dense(num_actions, activation="softmax")(common_fc_2)
+# actor = layers.Concatenate(axis=-1)([actor_mean, actor_sdev])
+critic = layers.Dense(1)(common_fc_2)
 
 model = keras.Model(inputs=inputs, outputs=[action, critic])
-
+# model = keras.Model(inputs=inputs, outputs=[actor, critic])
+model_jason = model.to_json()
+with open("model.json", "w") as json_file:
+    json_file.write(model_jason)
 """
 ## Train
 """
@@ -93,7 +117,8 @@ while True:  # Run until solved
     episode_reward = 0
     with tf.GradientTape() as tape:
         for timestep in range(1, max_steps_per_episode):
-            # env.render(); Adding this line would show the attempts
+            if episode_count % 100 == 0:
+                env.render() # Adding this line would show the attempts
             # of the agent in a pop up window.
 
             state = tf.convert_to_tensor(state)
@@ -102,11 +127,24 @@ while True:  # Run until solved
             # Predict action probabilities and estimated future rewards
             # from environment state
             action_probs, critic_value = model(state)
+            # action_meanNsdev, critic_value = model(state)
+            # action_mean = action_meanNsdev[0, 0:2]
+            # action_sdev = action_meanNsdev[0, 2:4]
             critic_value_history.append(critic_value[0, 0])
 
             # Sample action from action probability distribution
             action = np.random.choice(num_actions, p=np.squeeze(action_probs))
+            # action_x_mean = action_mean[0]
+            # action_y_mean = action_mean[1]
+            # action_x_sdev = action_sdev[0]
+            # action_y_sdev = action_sdev[1]
+            # action_x = np.random.normal(loc=action_x_mean, scale=action_x_sdev)
+            # action_y = np.random.normal(loc=action_y_mean, scale=action_y_sdev)
+            # action = [action_x, action_y]
             action_probs_history.append(tf.math.log(action_probs[0, action]))
+            # action_x_prob = (1/(action_x_sdev*np.sqrt(2*np.pi))) * np.exp((-1/2) * ((action_x-action_x_mean)/action_x_sdev)**2)
+            # action_y_prob = (1/(action_y_sdev*np.sqrt(2 * np.pi))) * np.exp((-1/2) * ((action_y-action_y_mean)/action_y_sdev) ** 2)
+            # action_probs_history.append(tf.math.log([action_x_prob, action_y_prob]))
 
             # Apply the sampled action in our environment
             state, reward, done, _ = env.step(action)
@@ -127,7 +165,7 @@ while True:  # Run until solved
         discounted_sum = 0
         for r in rewards_history[::-1]:
             discounted_sum = r + gamma * discounted_sum
-            returns.insert(0, discounted_sum)
+            returns.insert(0, discounted_sum) # returns: [G1, G2, ...]
 
         # Normalize
         returns = np.array(returns)
@@ -155,6 +193,7 @@ while True:  # Run until solved
 
         # Backpropagation
         loss_value = sum(actor_losses) + sum(critic_losses)
+        # loss_value = sum(sum(actor_losses)) + sum(critic_losses)
         grads = tape.gradient(loss_value, model.trainable_variables)
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
@@ -169,9 +208,15 @@ while True:  # Run until solved
         template = "running reward: {:.2f} at episode {}"
         print(template.format(running_reward, episode_count))
 
-    if running_reward > 195:  # Condition to consider the task solved
-        print("Solved at episode {}!".format(episode_count))
-        break
+    # Save the weights
+    if episode_count % 100 == 0:
+        model.save_weights("model" + str(episode_count) + ".h5")
+        print("Saved model to disk")
+
+    # if running_reward > 195:  # Condition to consider the task solved
+    #     print("Solved at episode {}!".format(episode_count))
+    #     break
+
 """
 ## Visualizations
 In early stages of training:
