@@ -117,7 +117,9 @@ while True:  # Run until solved
     episode_reward = 0
     with tf.GradientTape() as tape:
         for timestep in range(1, max_steps_per_episode):
-            if episode_count % 100 == 0:
+            # print(timestep)
+            # if episode_count % 100 == 0:
+            if episode_count % 1 == 0:
                 env.render() # Adding this line would show the attempts
             # of the agent in a pop up window.
 
