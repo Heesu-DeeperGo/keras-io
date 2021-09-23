@@ -65,6 +65,8 @@ from tensorflow.keras import layers
 import numpy as np
 import matplotlib.pyplot as plt
 from examples.rl.env.ball import BallEnv
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 """
 We use [OpenAIGym](http://gym.openai.com/docs) to create the environment.
 We will use the `upper_bound` parameter to scale our actions later.
@@ -253,40 +255,15 @@ def get_actor():
     last_init = tf.random_uniform_initializer(minval=-0.003, maxval=0.003)
 
     inputs = layers.Input(shape=dim_states)
-    conv2d_1 = layers.Conv2D(
-        filters=16,
-        # filters=32,
-        kernel_size=8,
-        strides=4,
-        # kernel_size=16,
-        # strides=8,
-        padding="valid",
-        activation="relu"
-    )(
-        inputs)
+    conv2d_1 = layers.Conv2D(filters=16, kernel_size=8, strides=4, padding="valid", activation="relu")(inputs)
     # conv2d_1 = layers.BatchNormalization()(conv2d_1)
     # conv2d_1 = layers.Activation('relu')(conv2d_1)
-    # conv2d_2 = layers.Conv2D(
-    #     filters=32,
-    #     kernel_size=4,
-    #     strides=2,
-    #     padding="valid",
-    #     activation="relu")(
-    #     conv2d_1)
-    flatten = layers.Flatten()(
-        # conv2d_2
-        conv2d_1
-    )
-    out = layers.Dense(
-        64,
-        # activation="relu"
-        )(flatten)
+    conv2d_2 = layers.Conv2D(filters=32, kernel_size=4, strides=2, padding="valid", activation="relu")(conv2d_1)
+    flatten = layers.Flatten()(conv2d_1)
+    out = layers.Dense(64, activation="relu")(flatten)
     # out = layers.BatchNormalization()(out)
     # out = layers.Activation('relu')(out)
-    out = layers.Dense(
-        32,
-        activation="relu"
-        )(out)
+    out = layers.Dense(32, activation="relu")(out)
     # out = layers.BatchNormalization()(out)
     # out = layers.Activation('relu')(out)
     # outputs = layers.Dense(1, activation="tanh", kernel_initializer=last_init)(out)`
@@ -301,43 +278,17 @@ def get_actor():
 def get_critic():
     # State as input
     state_input = layers.Input(shape=dim_states)
-    state_conv2d_1 = layers.Conv2D(
-        filters=16,
-        # filters=32,
-        kernel_size=8,
-        strides=4,
-        # kernel_size=16,
-        # strides=8,
-        padding="valid",
-        activation="relu"
-        )(state_input)
-    # state_conv2d_1 = layers.BatchNormalization()(
-    #     state_conv2d_1)
-    # state_conv2d_1 = layers.Activation('relu')(
-    #     state_conv2d_1)
-    # state_conv2d_2 = layers.Conv2D(
-    #     filters=32,
-    #     kernel_size=4,
-    #     strides=2,
-    #     padding="valid",
-    #     activation="relu")(
-    #     state_conv2d_1)
-    state_flatten = layers.Flatten()(
-        # state_conv2d_2
-        state_conv2d_1
-    )
+    state_conv2d_1 = layers.Conv2D(filters=16, kernel_size=8, strides=4, padding="valid", activation="relu")(state_input)
+    # state_conv2d_1 = layers.BatchNormalization()(state_conv2d_1)
+    # state_conv2d_1 = layers.Activation('relu')(state_conv2d_1)
+    state_conv2d_2 = layers.Conv2D(filters=32, kernel_size=4, strides=2, padding="valid", activation="relu")(state_conv2d_1)
+    state_flatten = layers.Flatten()(state_conv2d_1)
     # state_out = layers.Dense(16, activation="relu")(state_input)
     # state_out = layers.Dense(32, activation="relu")(state_out)
-    state_out = layers.Dense(
-        64,
-        activation="relu"
-        )(state_flatten)
+    state_out = layers.Dense(64, activation="relu")(state_flatten)
     # state_out = layers.BatchNormalization()(state_out)
     # state_out = layers.Activation('relu')(state_out)
-    state_out = layers.Dense(
-        32,
-        activation="relu"
-        )(state_out)
+    state_out = layers.Dense(32, activation="relu")(state_out)
     # state_out = layers.BatchNormalization()(state_out)
     # state_out = layers.Activation('relu')(state_out)
 
@@ -404,14 +355,14 @@ target_actor.set_weights(actor_model.get_weights())
 target_critic.set_weights(critic_model.get_weights())
 
 # Learning rate for actor-critic models
-critic_lr = 0.002
+critic_lr = 0.001
 actor_lr = 0.001
 # actor_lr = 0.0001
 
-critic_optimizer = tf.keras.optimizers.Adam(critic_lr, clipvalue=0.00001)
-actor_optimizer = tf.keras.optimizers.Adam(actor_lr, clipvalue=0.00001)
+critic_optimizer = tf.keras.optimizers.Adam(critic_lr)#, clipvalue=0.00001)
+actor_optimizer = tf.keras.optimizers.Adam(actor_lr)#, clipvalue=0.00001)
 
-total_episodes = 100
+total_episodes = 500
 # Discount factor for future rewards
 gamma = 0.99
 # Used to update target networks
@@ -450,7 +401,7 @@ while True:
         tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
 
         action = policy(tf_prev_state, ou_noise)
-        print(action)
+        # print(action)
         # Recieve state and reward from environment.
         state, reward, done, info = env.step(action)
 
