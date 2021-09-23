@@ -64,7 +64,7 @@ class BallEnv(gym.Env):
         # self.polemass_length = self.masspole * self.length
         # self.force_mag = 10.0
         # self.tau = 0.02  # seconds between state updates
-        self.tau = 0.1
+        # self.tau = 0.1
         # self.kinematics_integrator = "euler"
 
         # Angle at which to fail the episode
@@ -243,14 +243,16 @@ class BallEnv(gym.Env):
         # self.state = normalized_state_image
         self.state = 1.0 - normalized_state_image
 
-        done = bool(
-            self.x < self.space_x_min
-            or self.x > self.space_x_max
-            or self.y < self.space_y_min
-            or self.y > self.space_y_max
-            # or theta < -self.theta_threshold_radians
-            # or theta > self.theta_threshold_radians
-        )
+        # done = bool(
+        #     self.x < self.space_x_min
+        #     or self.x > self.space_x_max
+        #     or self.y < self.space_y_min
+        #     or self.y > self.space_y_max
+        #     # or theta < -self.theta_threshold_radians
+        #     # or theta > self.theta_threshold_radians
+        # )
+
+        done = False
 
         # if not done:
         #     reward = 1.0
@@ -296,8 +298,8 @@ class BallEnv(gym.Env):
 
         # self.x = np.random.uniform(low=1, high=self.space_x_max)
         # self.y = np.random.uniform(low=1, high=self.space_y_max)
-        self.x_dot = 0
-        self.y_dot = 0
+        # self.x_dot = 0
+        # self.y_dot = 0
         # self.target_x = np.random.uniform(low=1, high=self.space_x_max)
         # self.target_y = np.random.uniform(low=1, high=self.space_y_max)
         self.target_x = self.space_x_max / 2.0
