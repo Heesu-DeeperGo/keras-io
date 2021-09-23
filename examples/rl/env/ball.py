@@ -90,8 +90,8 @@ class BallEnv(gym.Env):
 
         self.object_radius = 2
 
-        self.min_pixelmove = -1.49
-        self.max_pixelmove = 1.49
+        self.min_pixelmove = -1.5
+        self.max_pixelmove = 1.5
 
         self.space_x_min = 0
         self.space_y_min = 0
@@ -160,7 +160,18 @@ class BallEnv(gym.Env):
         # y_dot = action[0][1]
 
         x_pixelmove = int(round(action[0][0]))
+        # Clipping
+        if x_pixelmove > 1:
+            x_pixelmove = 1
+        elif x_pixelmove < -1:
+            x_pixelmove = -1
+
         y_pixelmove = int(round(action[0][1]))
+        # Clipping
+        if y_pixelmove > 1:
+            y_pixelmove = 1
+        elif y_pixelmove < -1:
+            y_pixelmove = -1
 
         # if np.argmax(action) == 0: # Do not move
         #     x_pixelmove = 0
