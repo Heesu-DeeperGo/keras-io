@@ -249,25 +249,43 @@ the initial stages, which would squash our gradients to zero,
 as we use the `tanh` activation.
 """
 
+kernel_size_block1 = 3
+num_filters_block1 = 32
+
+kernel_size_block2 = 3
+num_filters_blick2 = 64
+
+num_fc_units = 64
 
 def get_actor():
     # Initialize weights between -3e-3 and 3-e3
     last_init = tf.random_uniform_initializer(minval=-0.003, maxval=0.003)
 
     inputs = layers.Input(shape=dim_states)
-    conv2d_1 = layers.Conv2D(filters=16, kernel_size=8, strides=4, padding="valid", activation="relu")(inputs)
-    # conv2d_1 = layers.BatchNormalization()(conv2d_1)
-    # conv2d_1 = layers.Activation('relu')(conv2d_1)
-    conv2d_2 = layers.Conv2D(filters=32, kernel_size=4, strides=2, padding="valid", activation="relu")(conv2d_1)
-    flatten = layers.Flatten()(conv2d_1)
-    out = layers.Dense(64, activation="relu")(flatten)
+
+    conv2d_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(inputs)
+    conv2d_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(conv2d_block1_1)
+    maxpool_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block1_2)
+
+    conv2d_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same")(maxpool_block1)
+    conv2d_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same", activation="relu")(conv2d_block2_1)
+    maxpool_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block2_2)
+
+    flatten = layers.Flatten()(maxpool_block2)
+
+    fc1 = layers.Dense(num_fc_units, activation="relu")(flatten)
+    fc2 = layers.Dense(num_fc_units, activation="relu")(fc1)
+
+    outputs = layers.Dense(2, activation="tanh", kernel_initializer=last_init)(fc2)
+
     # out = layers.BatchNormalization()(out)
     # out = layers.Activation('relu')(out)
-    out = layers.Dense(32, activation="relu")(out)
+    # out = layers.Dense(32, activation="relu")(out)
     # out = layers.BatchNormalization()(out)
     # out = layers.Activation('relu')(out)
     # outputs = layers.Dense(1, activation="tanh", kernel_initializer=last_init)(out)`
-    outputs = layers.Dense(2, activation="tanh", kernel_initializer=last_init)(out)
+    # outputs = layers.Dense(2, activation="tanh", kernel_initializer=last_init)(out)
+    # outputs = layers.Dense(5, activation="softmax")(out)
 
     # Our upper bound is 2.0 for Pendulum.
     outputs = outputs * upper_bound
@@ -276,33 +294,50 @@ def get_actor():
 
 
 def get_critic():
-    # State as input
-    state_input = layers.Input(shape=dim_states)
-    state_conv2d_1 = layers.Conv2D(filters=16, kernel_size=8, strides=4, padding="valid", activation="relu")(state_input)
-    # state_conv2d_1 = layers.BatchNormalization()(state_conv2d_1)
-    # state_conv2d_1 = layers.Activation('relu')(state_conv2d_1)
-    state_conv2d_2 = layers.Conv2D(filters=32, kernel_size=4, strides=2, padding="valid", activation="relu")(state_conv2d_1)
-    state_flatten = layers.Flatten()(state_conv2d_1)
-    # state_out = layers.Dense(16, activation="relu")(state_input)
+    # # State as input
+    # state_input = layers.Input(shape=dim_states)
+    # state_conv2d_1 = layers.Conv2D(filters=16, kernel_size=8, strides=4, padding="valid", activation="relu")(state_input)
+    # # state_conv2d_1 = layers.BatchNormalization()(state_conv2d_1)
+    # # state_conv2d_1 = layers.Activation('relu')(state_conv2d_1)
+    # state_conv2d_2 = layers.Conv2D(filters=32, kernel_size=4, strides=2, padding="valid", activation="relu")(state_conv2d_1)
+    # state_flatten = layers.Flatten()(state_conv2d_1)
+    # # state_out = layers.Dense(16, activation="relu")(state_input)
+    # # state_out = layers.Dense(32, activation="relu")(state_out)
+    # state_out = layers.Dense(64, activation="relu")(state_flatten)
+    # # state_out = layers.BatchNormalization()(state_out)
+    # # state_out = layers.Activation('relu')(state_out)
     # state_out = layers.Dense(32, activation="relu")(state_out)
-    state_out = layers.Dense(64, activation="relu")(state_flatten)
-    # state_out = layers.BatchNormalization()(state_out)
-    # state_out = layers.Activation('relu')(state_out)
-    state_out = layers.Dense(32, activation="relu")(state_out)
-    # state_out = layers.BatchNormalization()(state_out)
-    # state_out = layers.Activation('relu')(state_out)
+    # # state_out = layers.BatchNormalization()(state_out)
+    # # state_out = layers.Activation('relu')(state_out)
+
+    state_input = layers.Input(shape=dim_states)
+
+    conv2d_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(state_input)
+    conv2d_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(
+        conv2d_block1_1)
+    maxpool_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block1_2)
+
+    conv2d_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same")(maxpool_block1)
+    conv2d_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same", activation="relu")(
+        conv2d_block2_1)
+    maxpool_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block2_2)
+
+    flatten = layers.Flatten()(maxpool_block2)
+
+    fc1 = layers.Dense(num_fc_units, activation="relu")(flatten)
+    state_out = layers.Dense(num_fc_units, activation="relu")(fc1)
 
     # Action as input
     action_input = layers.Input(shape=(num_actions))
-    action_out = layers.Dense(32, activation="relu")(action_input)
+    action_out = layers.Dense(num_fc_units, activation="relu")(action_input)
 
     # Both are passed through seperate layer before concatenating
     concat = layers.Concatenate()([state_out, action_out])
 
     # out = layers.Dense(256, activation="relu")(concat)
     # out = layers.Dense(256, activation="relu")(out)
-    out = layers.Dense(128, activation="relu")(concat)
-    out = layers.Dense(128, activation="relu")(out)
+    out = layers.Dense(num_fc_units, activation="relu")(concat)
+    out = layers.Dense(num_fc_units, activation="relu")(out)
     outputs = layers.Dense(1)(out)
 
     # Outputs single value for give state-action
@@ -393,15 +428,18 @@ while True:
 
     # while True:
     for timestep in range(1, max_steps_per_episode):
+        # print(timestep)
         # Uncomment this to see the Actor in action
         # But not in a python notebook.
+        # if episode_count % 100 == 0:
         if episode_count % 100 == 0:
             env.render()
 
         tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
 
         action = policy(tf_prev_state, ou_noise)
-        # print(action)
+        if episode_count % 100 == 0:
+            print(action)
         # Recieve state and reward from environment.
         state, reward, done, info = env.step(action)
 
