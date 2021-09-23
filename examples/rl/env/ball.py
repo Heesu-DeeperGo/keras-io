@@ -103,6 +103,8 @@ class BallEnv(gym.Env):
         # self.space_y_max = 80
         self.input_num_channel = 3
 
+        self.num_sequence = 3
+
         # self.target_radius = 5
 
         # self.action_space = spaces.Discrete(2)
@@ -122,7 +124,7 @@ class BallEnv(gym.Env):
             low=0,
             high=255,
             # shape=(self.input_num_channel, self.input_height, self.input_width),
-            shape=(self.space_y_max, self.space_x_max, self.input_num_channel),
+            shape=(self.num_sequence, self.space_y_max, self.space_x_max, self.input_num_channel),
             # shape=(self.input_height, self.input_width),
             dtype=np.uint8
         )
@@ -286,8 +288,9 @@ class BallEnv(gym.Env):
         # plt.imshow(self.background_image)
         # plt.show()
         normalized_state_image = self.background_image / 255.0
-        # self.state = normalized_state_image
-        self.state = 1.0 - normalized_state_image
+        self.state = normalized_state_image
+        # self.state = 1.0 - normalized_state_image
+        # self.state = 1.0 - normalized_state_image
 
         # done = bool(
         #     self.x < self.space_x_min

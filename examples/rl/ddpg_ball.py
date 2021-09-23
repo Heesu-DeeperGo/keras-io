@@ -257,11 +257,14 @@ num_filters_blick2 = 64
 
 num_fc_units = 64
 
+# dim_single_state = dim_states[1:]
+
 def get_actor():
     # Initialize weights between -3e-3 and 3-e3
     last_init = tf.random_uniform_initializer(minval=-0.003, maxval=0.003)
 
     inputs = layers.Input(shape=dim_states)
+    # inputs = layers.Input(shape=dim_single_state)
 
     conv2d_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(inputs)
     conv2d_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(conv2d_block1_1)
@@ -369,7 +372,7 @@ def policy(state, noise_object):
 """
 
 # std_dev = 0.2
-std_dev = 3
+std_dev = 0.5
 ou_noise = OUActionNoise(mean=np.zeros(1), std_deviation=float(std_dev) * np.ones(1))
 
 actor_model = get_actor()
@@ -436,6 +439,8 @@ while True:
         if episode_count % 100 == 0:
             env.render()
 
+        # prev_state_info = get_state_info(prev_state)
+        # tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
         tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
 
         action = policy(tf_prev_state, ou_noise)
