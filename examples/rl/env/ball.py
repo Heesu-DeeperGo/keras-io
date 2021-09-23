@@ -90,8 +90,8 @@ class BallEnv(gym.Env):
 
         self.object_radius = 2
 
-        self.min_pixelmove = -1
-        self.max_pixelmove = 1
+        self.min_pixelmove = -1.49
+        self.max_pixelmove = 1.49
 
         self.space_x_min = 0
         self.space_y_min = 0
@@ -113,6 +113,7 @@ class BallEnv(gym.Env):
             low=self.min_pixelmove,
             high=self.max_pixelmove,
             shape=(2,),
+            # shape=(5,),
             dtype=np.float32
         )
 
@@ -158,8 +159,25 @@ class BallEnv(gym.Env):
         # x_dot = action[0][0]
         # y_dot = action[0][1]
 
-        x_pixelmove = action[0][0]
-        y_pixelmove = action[0][1]
+        x_pixelmove = int(round(action[0][0]))
+        y_pixelmove = int(round(action[0][1]))
+
+        # if np.argmax(action) == 0: # Do not move
+        #     x_pixelmove = 0
+        #     y_pixelmove = 0
+        # elif np.argmax(action) == 1: # Left
+        #     x_pixelmove = -1
+        #     y_pixelmove = 0
+        # elif np.argmax(action) == 2: # Right
+        #     x_pixelmove = 1
+        #     y_pixelmove = 0
+        # elif np.argmax(action) == 3:  # Up
+        #     x_pixelmove = 0
+        #     y_pixelmove = 1
+        # elif np.argmax(action) == 4:  # Down
+        #     x_pixelmove = 0
+        #     y_pixelmove = -1
+
 
         # print(action)
         # if action == 0:
@@ -211,8 +229,25 @@ class BallEnv(gym.Env):
         # self.x = self.x + self.tau * x_dot
         # self.y = self.y + self.tau * y_dot
 
-        self.x = self.x + int(round(x_pixelmove))
-        self.y = self.y + int(round(y_pixelmove))
+        # Move
+        # self.x = self.x + int(round(x_pixelmove))
+        # self.y = self.y + int(round(y_pixelmove))
+        self.x = self.x + x_pixelmove
+        self.y = self.y + y_pixelmove
+        # Agent doesn't move if the action makes the agent out of the boundary
+        # penalty = 0
+        if self.space_x_min <= self.x <= self.space_x_max:
+            self.x = self.x
+        else:
+            self.x = self.x_previous
+            # penalty = -10
+        if self.space_y_min <= self.y <= self.space_y_max:
+            self.y = self.y
+        else:
+            self.y = self.y_previous
+            # penalty = -10
+        self.x_previous = self.x
+        self.y_previous = self.y
 
         x = int(round(self.x))
         y = int(round(self.y))
@@ -281,7 +316,7 @@ class BallEnv(gym.Env):
         #     reward = 0.0
 
         # Continuous reward
-        reward = -2*(distance / self.space_x_max) + 1
+        reward = 1 - (distance / self.space_x_max)
         # done = bool(distance > 30)
 
         # reward = 0
