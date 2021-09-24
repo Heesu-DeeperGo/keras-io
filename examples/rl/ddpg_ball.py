@@ -159,11 +159,13 @@ class Buffer:
         # Instead of list of tuples as the exp.replay concept go
         # We use different np.arrays for each tuple element
         # self.state_buffer = np.zeros((self.buffer_capacity, num_states))
-        self.state_buffer = np.zeros((self.buffer_capacity, dim_states[0], dim_states[1], dim_states[2]))
+        # self.state_buffer = np.zeros((self.buffer_capacity, dim_states[0], dim_states[1], dim_states[2]))
+        self.state_buffer = np.zeros((self.buffer_capacity, dim_states[0], dim_states[1], dim_states[2], dim_states[3]))
         self.action_buffer = np.zeros((self.buffer_capacity, num_actions))
         self.reward_buffer = np.zeros((self.buffer_capacity, 1))
         # self.next_state_buffer = np.zeros((self.buffer_capacity, num_states))
-        self.next_state_buffer = np.zeros((self.buffer_capacity, dim_states[0], dim_states[1], dim_states[2]))
+        # self.next_state_buffer = np.zeros((self.buffer_capacity, dim_states[0], dim_states[1], dim_states[2]))
+        self.next_state_buffer = np.zeros((self.buffer_capacity, dim_states[0], dim_states[1], dim_states[2], dim_states[3]))
 
     # Takes (s,a,r,s') obervation tuple as input
     def record(self, obs_tuple):
@@ -250,10 +252,10 @@ as we use the `tanh` activation.
 """
 
 kernel_size_block1 = 3
-num_filters_block1 = 32
+num_filters_block1 = 16
 
 kernel_size_block2 = 3
-num_filters_blick2 = 64
+num_filters_blick2 = 32
 
 num_fc_units = 64
 
@@ -266,20 +268,184 @@ def get_actor():
     inputs = layers.Input(shape=dim_states)
     # inputs = layers.Input(shape=dim_single_state)
 
-    conv2d_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(inputs)
-    conv2d_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(conv2d_block1_1)
-    maxpool_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block1_2)
+    input1 = inputs[:,0,:,:]
+    input2 = inputs[:,1,:,:]
+    input3 = inputs[:,2,:,:]
+    input4 = inputs[:,3,:,:]
+    input5 = inputs[:, 3, :, :]
+    input6 = inputs[:, 3, :, :]
+    input7 = inputs[:, 3, :, :]
+    input8 = inputs[:, 3, :, :]
 
-    conv2d_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same")(maxpool_block1)
-    conv2d_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same", activation="relu")(conv2d_block2_1)
-    maxpool_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block2_2)
+    conv2d_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+                                           padding="same", activation='relu')
+    conv2d_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+                                           padding="same", activation="relu")
+    maxpool_1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')
+    conv2d_3 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+                                           padding="same", activation='relu')
+    conv2d_4 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+                                           padding="same", activation="relu")
+    maxpool_2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')
+    flatten = layers.Flatten()
+    fc1 = layers.Dense(num_fc_units, activation="relu")
+    fc2 = layers.Dense(num_fc_units, activation="relu")
 
-    flatten = layers.Flatten()(maxpool_block2)
+    out1 = conv2d_1(input1)
+    out1 = conv2d_2(out1)
+    out1 = maxpool_1(out1)
+    out1 = conv2d_3(out1)
+    out1 = conv2d_4(out1)
+    out1 = maxpool_2(out1)
+    out1 = flatten(out1)
+    out1 = fc1(out1)
+    out1 = fc2(out1)
 
-    fc1 = layers.Dense(num_fc_units, activation="relu")(flatten)
-    fc2 = layers.Dense(num_fc_units, activation="relu")(fc1)
+    out2 = conv2d_1(input2)
+    out2 = conv2d_2(out2)
+    out2 = maxpool_1(out2)
+    out2 = conv2d_3(out2)
+    out2 = conv2d_4(out2)
+    out2 = maxpool_2(out2)
+    out2 = flatten(out2)
+    out2 = fc1(out2)
+    out2 = fc2(out2)
 
-    outputs = layers.Dense(2, activation="tanh", kernel_initializer=last_init)(fc2)
+    out3 = conv2d_1(input3)
+    out3 = conv2d_2(out3)
+    out3 = maxpool_1(out3)
+    out3 = conv2d_3(out3)
+    out3 = conv2d_4(out3)
+    out3 = maxpool_2(out3)
+    out3 = flatten(out3)
+    out3 = fc1(out3)
+    out3 = fc2(out3)
+
+    out4 = conv2d_1(input4)
+    out4 = conv2d_2(out4)
+    out4 = maxpool_1(out4)
+    out4 = conv2d_3(out4)
+    out4 = conv2d_4(out4)
+    out4 = maxpool_2(out4)
+    out4 = flatten(out4)
+    out4 = fc1(out4)
+    out4 = fc2(out4)
+
+    out5 = conv2d_1(input5)
+    out5 = conv2d_2(out5)
+    out5 = maxpool_1(out5)
+    out5 = conv2d_3(out5)
+    out5 = conv2d_4(out5)
+    out5 = maxpool_2(out5)
+    out5 = flatten(out5)
+    out5 = fc1(out5)
+    out5 = fc2(out5)
+
+    out6 = conv2d_1(input6)
+    out6 = conv2d_2(out6)
+    out6 = maxpool_1(out6)
+    out6 = conv2d_3(out6)
+    out6 = conv2d_4(out6)
+    out6 = maxpool_2(out6)
+    out6 = flatten(out6)
+    out6 = fc1(out6)
+    out6 = fc2(out6)
+
+    out7 = conv2d_1(input7)
+    out7 = conv2d_2(out7)
+    out7 = maxpool_1(out7)
+    out7 = conv2d_3(out7)
+    out7 = conv2d_4(out7)
+    out7 = maxpool_2(out7)
+    out7 = flatten(out7)
+    out7 = fc1(out7)
+    out7 = fc2(out7)
+
+    out8 = conv2d_1(input8)
+    out8 = conv2d_2(out8)
+    out8 = maxpool_1(out8)
+    out8 = conv2d_3(out8)
+    out8 = conv2d_4(out8)
+    out8 = maxpool_2(out8)
+    out8 = flatten(out8)
+    out8 = fc1(out8)
+    out8 = fc2(out8)
+
+    # conv2d_input1_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(input1)
+    # conv2d_input1_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(conv2d_input1_block1_1)
+    # maxpool_input1_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_input1_block1_2)
+    # conv2d_input1_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same")(maxpool_input1_block1)
+    # conv2d_input1_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same", activation="relu")(conv2d_input1_block2_1)
+    # maxpool_input1_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_input1_block2_2)
+    # flatten_input1 = layers.Flatten()(maxpool_input1_block2)
+    # fc1_input1 = layers.Dense(num_fc_units, activation="relu")(flatten_input1)
+    # fc2_input1 = layers.Dense(num_fc_units, activation="relu")(fc1_input1)
+
+    # conv2d_input2_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(input2)
+    # conv2d_input2_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(conv2d_input2_block1_1)
+    # maxpool_input2_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_input2_block1_2)
+    # conv2d_input2_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same")(maxpool_input2_block1)
+    # conv2d_input2_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same", activation="relu")(conv2d_input2_block2_1)
+    # maxpool_input2_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_input2_block2_2)
+    # flatten_input2 = layers.Flatten()(maxpool_input2_block2)
+    # fc1_input2 = layers.Dense(num_fc_units, activation="relu")(flatten_input2)
+    # fc2_input2 = layers.Dense(num_fc_units, activation="relu")(fc1_input2)
+    #
+    # conv2d_input3_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(input3)
+    # conv2d_input3_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(conv2d_input3_block1_1)
+    # maxpool_input3_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_input3_block1_2)
+    # conv2d_input3_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same")(maxpool_input3_block1)
+    # conv2d_input3_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same", activation="relu")(conv2d_input3_block2_1)
+    # maxpool_input3_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_input3_block2_2)
+    # flatten_input3 = layers.Flatten()(maxpool_input3_block2)
+    # fc1_input3 = layers.Dense(num_fc_units, activation="relu")(flatten_input3)
+    # fc2_input3 = layers.Dense(num_fc_units, activation="relu")(fc1_input3)
+    #
+    # conv2d_input4_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(input4)
+    # conv2d_input4_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(conv2d_input4_block1_1)
+    # maxpool_input4_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_input4_block1_2)
+    # conv2d_input4_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same")(maxpool_input4_block1)
+    # conv2d_input4_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same", activation="relu")(conv2d_input4_block2_1)
+    # maxpool_input4_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_input4_block2_2)
+    # flatten_input4 = layers.Flatten()(maxpool_input4_block2)
+    # fc1_input4 = layers.Dense(num_fc_units, activation="relu")(flatten_input4)
+    # fc2_input4 = layers.Dense(num_fc_units, activation="relu")(fc1_input4)
+
+    fc2_input1_vec = tf.expand_dims(out1, 1)
+    fc2_input2_vec = tf.expand_dims(out2, 1)
+    fc2_input3_vec = tf.expand_dims(out3, 1)
+    fc2_input4_vec = tf.expand_dims(out4, 1)
+    fc2_input5_vec = tf.expand_dims(out5, 1)
+    fc2_input6_vec = tf.expand_dims(out6, 1)
+    fc2_input7_vec = tf.expand_dims(out7, 1)
+    fc2_input8_vec = tf.expand_dims(out8, 1)
+
+    concat_all_fc_vec = layers.Concatenate(axis=1)([
+        fc2_input1_vec,
+        fc2_input2_vec,
+        fc2_input3_vec,
+        fc2_input4_vec,
+        fc2_input5_vec,
+        fc2_input6_vec,
+        fc2_input7_vec,
+        fc2_input8_vec,
+    ])
+
+    conv_timewise1 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(concat_all_fc_vec)
+    conv_timewise2 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(conv_timewise1)
+    conv_timewise3 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(conv_timewise2)
+    conv_timewise4 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise3)
+    conv_timewise5 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise4)
+    conv_timewise6 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise5)
+    conv_timewise7 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise6)
+
+    flatten_all = layers.Flatten()(conv_timewise7)
+
+    outputs = layers.Dense(2, activation="tanh", kernel_initializer=last_init)(flatten_all)
 
     # out = layers.BatchNormalization()(out)
     # out = layers.Activation('relu')(out)
@@ -298,37 +464,232 @@ def get_actor():
 
 def get_critic():
     # # State as input
+
+    #
     # state_input = layers.Input(shape=dim_states)
-    # state_conv2d_1 = layers.Conv2D(filters=16, kernel_size=8, strides=4, padding="valid", activation="relu")(state_input)
-    # # state_conv2d_1 = layers.BatchNormalization()(state_conv2d_1)
-    # # state_conv2d_1 = layers.Activation('relu')(state_conv2d_1)
-    # state_conv2d_2 = layers.Conv2D(filters=32, kernel_size=4, strides=2, padding="valid", activation="relu")(state_conv2d_1)
-    # state_flatten = layers.Flatten()(state_conv2d_1)
-    # # state_out = layers.Dense(16, activation="relu")(state_input)
-    # # state_out = layers.Dense(32, activation="relu")(state_out)
-    # state_out = layers.Dense(64, activation="relu")(state_flatten)
-    # # state_out = layers.BatchNormalization()(state_out)
-    # # state_out = layers.Activation('relu')(state_out)
-    # state_out = layers.Dense(32, activation="relu")(state_out)
-    # # state_out = layers.BatchNormalization()(state_out)
-    # # state_out = layers.Activation('relu')(state_out)
+    #
+    # conv2d_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(state_input)
+    # conv2d_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(
+    #     conv2d_block1_1)
+    # maxpool_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block1_2)
+    #
+    # conv2d_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same")(maxpool_block1)
+    # conv2d_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same", activation="relu")(
+    #     conv2d_block2_1)
+    # maxpool_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block2_2)
+    #
+    # flatten = layers.Flatten()(maxpool_block2)
+    #
+    # fc1 = layers.Dense(num_fc_units, activation="relu")(flatten)
 
     state_input = layers.Input(shape=dim_states)
+    # inputs = layers.Input(shape=dim_single_state)
 
-    conv2d_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same")(state_input)
-    conv2d_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1, padding="same", activation="relu")(
-        conv2d_block1_1)
-    maxpool_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block1_2)
+    input1 = state_input[:, 0, :, :]
+    input2 = state_input[:, 1, :, :]
+    input3 = state_input[:, 2, :, :]
+    input4 = state_input[:, 3, :, :]
+    input5 = state_input[:, 4, :, :]
+    input6 = state_input[:, 5, :, :]
+    input7 = state_input[:, 6, :, :]
+    input8 = state_input[:, 7, :, :]
 
-    conv2d_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same")(maxpool_block1)
-    conv2d_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1, padding="same", activation="relu")(
-        conv2d_block2_1)
-    maxpool_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(conv2d_block2_2)
+    conv2d_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+                             padding="same", activation='relu')
+    conv2d_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+                             padding="same", activation="relu")
+    maxpool_1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')
+    conv2d_3 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+                             padding="same", activation='relu')
+    conv2d_4 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+                             padding="same", activation="relu")
+    maxpool_2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')
+    flatten = layers.Flatten()
+    fc1 = layers.Dense(num_fc_units, activation="relu")
+    fc2 = layers.Dense(num_fc_units, activation="relu")
 
-    flatten = layers.Flatten()(maxpool_block2)
+    out1 = conv2d_1(input1)
+    out1 = conv2d_2(out1)
+    out1 = maxpool_1(out1)
+    out1 = conv2d_3(out1)
+    out1 = conv2d_4(out1)
+    out1 = maxpool_2(out1)
+    out1 = flatten(out1)
+    out1 = fc1(out1)
+    out1 = fc2(out1)
 
-    fc1 = layers.Dense(num_fc_units, activation="relu")(flatten)
-    state_out = layers.Dense(num_fc_units, activation="relu")(fc1)
+    out2 = conv2d_1(input2)
+    out2 = conv2d_2(out2)
+    out2 = maxpool_1(out2)
+    out2 = conv2d_3(out2)
+    out2 = conv2d_4(out2)
+    out2 = maxpool_2(out2)
+    out2 = flatten(out2)
+    out2 = fc1(out2)
+    out2 = fc2(out2)
+
+    out3 = conv2d_1(input3)
+    out3 = conv2d_2(out3)
+    out3 = maxpool_1(out3)
+    out3 = conv2d_3(out3)
+    out3 = conv2d_4(out3)
+    out3 = maxpool_2(out3)
+    out3 = flatten(out3)
+    out3 = fc1(out3)
+    out3 = fc2(out3)
+
+    out4 = conv2d_1(input4)
+    out4 = conv2d_2(out4)
+    out4 = maxpool_1(out4)
+    out4 = conv2d_3(out4)
+    out4 = conv2d_4(out4)
+    out4 = maxpool_2(out4)
+    out4 = flatten(out4)
+    out4 = fc1(out4)
+    out4 = fc2(out4)
+
+    out5 = conv2d_1(input5)
+    out5 = conv2d_2(out5)
+    out5 = maxpool_1(out5)
+    out5 = conv2d_3(out5)
+    out5 = conv2d_4(out5)
+    out5 = maxpool_2(out5)
+    out5 = flatten(out5)
+    out5 = fc1(out5)
+    out5 = fc2(out5)
+
+    out6 = conv2d_1(input6)
+    out6 = conv2d_2(out6)
+    out6 = maxpool_1(out6)
+    out6 = conv2d_3(out6)
+    out6 = conv2d_4(out6)
+    out6 = maxpool_2(out6)
+    out6 = flatten(out6)
+    out6 = fc1(out6)
+    out6 = fc2(out6)
+
+    out7 = conv2d_1(input7)
+    out7 = conv2d_2(out7)
+    out7 = maxpool_1(out7)
+    out7 = conv2d_3(out7)
+    out7 = conv2d_4(out7)
+    out7 = maxpool_2(out7)
+    out7 = flatten(out7)
+    out7 = fc1(out7)
+    out7 = fc2(out7)
+
+    out8 = conv2d_1(input8)
+    out8 = conv2d_2(out8)
+    out8 = maxpool_1(out8)
+    out8 = conv2d_3(out8)
+    out8 = conv2d_4(out8)
+    out8 = maxpool_2(out8)
+    out8 = flatten(out8)
+    out8 = fc1(out8)
+    out8 = fc2(out8)
+
+    # conv2d_input1_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+    #                                        padding="same")(input1)
+    # conv2d_input1_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+    #                                        padding="same", activation="relu")(conv2d_input1_block1_1)
+    # maxpool_input1_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(
+    #     conv2d_input1_block1_2)
+    # conv2d_input1_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+    #                                        padding="same")(maxpool_input1_block1)
+    # conv2d_input1_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+    #                                        padding="same", activation="relu")(conv2d_input1_block2_1)
+    # maxpool_input1_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(
+    #     conv2d_input1_block2_2)
+    # flatten_input1 = layers.Flatten()(maxpool_input1_block2)
+    # fc1_input1 = layers.Dense(num_fc_units, activation="relu")(flatten_input1)
+    # fc2_input1 = layers.Dense(num_fc_units, activation="relu")(fc1_input1)
+    #
+    # conv2d_input2_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+    #                                        padding="same")(input2)
+    # conv2d_input2_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+    #                                        padding="same", activation="relu")(conv2d_input2_block1_1)
+    # maxpool_input2_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(
+    #     conv2d_input2_block1_2)
+    # conv2d_input2_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+    #                                        padding="same")(maxpool_input2_block1)
+    # conv2d_input2_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+    #                                        padding="same", activation="relu")(conv2d_input2_block2_1)
+    # maxpool_input2_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(
+    #     conv2d_input2_block2_2)
+    # flatten_input2 = layers.Flatten()(maxpool_input2_block2)
+    # fc1_input2 = layers.Dense(num_fc_units, activation="relu")(flatten_input2)
+    # fc2_input2 = layers.Dense(num_fc_units, activation="relu")(fc1_input2)
+    #
+    # conv2d_input3_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+    #                                        padding="same")(input3)
+    # conv2d_input3_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+    #                                        padding="same", activation="relu")(conv2d_input3_block1_1)
+    # maxpool_input3_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(
+    #     conv2d_input3_block1_2)
+    # conv2d_input3_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+    #                                        padding="same")(maxpool_input3_block1)
+    # conv2d_input3_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+    #                                        padding="same", activation="relu")(conv2d_input3_block2_1)
+    # maxpool_input3_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(
+    #     conv2d_input3_block2_2)
+    # flatten_input3 = layers.Flatten()(maxpool_input3_block2)
+    # fc1_input3 = layers.Dense(num_fc_units, activation="relu")(flatten_input3)
+    # fc2_input3 = layers.Dense(num_fc_units, activation="relu")(fc1_input3)
+    #
+    # conv2d_input4_block1_1 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+    #                                        padding="same")(input4)
+    # conv2d_input4_block1_2 = layers.Conv2D(filters=num_filters_block1, kernel_size=kernel_size_block1, strides=1,
+    #                                        padding="same", activation="relu")(conv2d_input4_block1_1)
+    # maxpool_input4_block1 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(
+    #     conv2d_input4_block1_2)
+    # conv2d_input4_block2_1 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+    #                                        padding="same")(maxpool_input4_block1)
+    # conv2d_input4_block2_2 = layers.Conv2D(filters=num_filters_blick2, kernel_size=kernel_size_block2, strides=1,
+    #                                        padding="same", activation="relu")(conv2d_input4_block2_1)
+    # maxpool_input4_block2 = layers.MaxPooling2D(pool_size=(2, 2), strides=(2, 2), padding='valid')(
+    #     conv2d_input4_block2_2)
+    # flatten_input4 = layers.Flatten()(maxpool_input4_block2)
+    # fc1_input4 = layers.Dense(num_fc_units, activation="relu")(flatten_input4)
+    # fc2_input4 = layers.Dense(num_fc_units, activation="relu")(fc1_input4)
+
+    fc2_input1_vec = tf.expand_dims(out1, 1)
+    fc2_input2_vec = tf.expand_dims(out2, 1)
+    fc2_input3_vec = tf.expand_dims(out3, 1)
+    fc2_input4_vec = tf.expand_dims(out4, 1)
+    fc2_input5_vec = tf.expand_dims(out5, 1)
+    fc2_input6_vec = tf.expand_dims(out6, 1)
+    fc2_input7_vec = tf.expand_dims(out7, 1)
+    fc2_input8_vec = tf.expand_dims(out8, 1)
+
+    concat_all_fc_vec = layers.Concatenate(axis=1)([
+        fc2_input1_vec,
+        fc2_input2_vec,
+        fc2_input3_vec,
+        fc2_input4_vec,
+        fc2_input5_vec,
+        fc2_input6_vec,
+        fc2_input7_vec,
+        fc2_input8_vec,
+    ])
+
+    conv_timewise1 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        concat_all_fc_vec)
+    conv_timewise2 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise1)
+    conv_timewise3 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise2)
+    conv_timewise4 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise3)
+    conv_timewise5 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise4)
+    conv_timewise6 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise5)
+    conv_timewise7 = layers.Conv1D(filters=64, kernel_size=2, strides=1, padding="valid", activation='relu')(
+        conv_timewise6)
+
+    state_out = layers.Flatten()(conv_timewise7)
+
+    # state_out = layers.Dense(num_fc_units, activation="relu")(flatten_all)
 
     # Action as input
     action_input = layers.Input(shape=(num_actions))
@@ -372,7 +733,7 @@ def policy(state, noise_object):
 """
 
 # std_dev = 0.2
-std_dev = 0.5
+std_dev = 1
 ou_noise = OUActionNoise(mean=np.zeros(1), std_deviation=float(std_dev) * np.ones(1))
 
 actor_model = get_actor()
