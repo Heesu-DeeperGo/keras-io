@@ -327,18 +327,18 @@ ou_noise = OUActionNoise(mean=np.zeros(1), std_deviation=float(std_dev) * np.one
 # target_actor = get_actor()
 # target_critic = get_critic()
 
-actor_json_file = open('./weights_whiteBackground/actor_model.json', 'r')
+actor_json_file = open('actor_model.json', 'r')
 loaded_actor_model_json = actor_json_file.read()
 actor_json_file.close()
 loaded_actor_model = keras.models.model_from_json(loaded_actor_model_json)
-loaded_actor_model.load_weights("./weights_whiteBackground/ball_target_actor1000.h5")
+loaded_actor_model.load_weights("ball_target_actor500.h5")
 print("Loaded actor model from disk")
 
-critic_json_file = open('./weights_whiteBackground/critic_model.json', 'r')
+critic_json_file = open('critic_model.json', 'r')
 loaded_critic_model_json = critic_json_file.read()
 critic_json_file.close()
 loaded_critic_model = keras.models.model_from_json(loaded_critic_model_json)
-loaded_critic_model.load_weights("./weights_whiteBackground/ball_target_critic1000.h5")
+loaded_critic_model.load_weights("ball_target_critic500.h5")
 print("Loaded critic model from disk")
 
 # Making the weights equal initially
