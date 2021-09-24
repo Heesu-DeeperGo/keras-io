@@ -90,8 +90,8 @@ class BallEnv(gym.Env):
 
         self.object_radius = 2
 
-        self.min_pixelmove = -1.5
-        self.max_pixelmove = 1.5
+        self.min_pixelmove = -1
+        self.max_pixelmove = 1
 
         self.space_x_min = 0
         self.space_y_min = 0
@@ -103,7 +103,7 @@ class BallEnv(gym.Env):
         # self.space_y_max = 80
         self.input_num_channel = 3
 
-        self.num_sequence = 3
+        self.num_sequence = 8
 
         # self.target_radius = 5
 
@@ -129,9 +129,11 @@ class BallEnv(gym.Env):
             dtype=np.uint8
         )
 
+        self.state = np.zeros(shape=(8, 28, 28, 3))
+
         self.seed()
         self.viewer = None
-        self.state = None
+        # self.state = None
 
         self.steps_beyond_done = None
 
@@ -288,9 +290,9 @@ class BallEnv(gym.Env):
         # plt.imshow(self.background_image)
         # plt.show()
         normalized_state_image = self.background_image / 255.0
-        self.state = normalized_state_image
-        # self.state = 1.0 - normalized_state_image
-        # self.state = 1.0 - normalized_state_image
+        # self.state = normalized_state_image
+        self.state = np.delete(arr=self.state, obj=0, axis=0)
+        self.state = np.concatenate((self.state, np.expand_dims(normalized_state_image, axis=0)), axis=0)
 
         # done = bool(
         #     self.x < self.space_x_min
@@ -377,7 +379,8 @@ class BallEnv(gym.Env):
         # plt.show()
         normalized_state_image = self.background_image / 255.0
         # self.state = normalized_state_image
-        self.state = 1.0 - normalized_state_image
+        self.state = np.delete(arr=self.state, obj=0, axis=0)
+        self.state = np.concatenate((self.state, np.expand_dims(normalized_state_image, axis=0)), axis=0)
         self.steps_beyond_done = None
 
         return np.array(self.state, dtype=np.float32)
