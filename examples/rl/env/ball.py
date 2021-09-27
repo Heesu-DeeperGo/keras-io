@@ -90,8 +90,12 @@ class BallEnv(gym.Env):
 
         self.object_radius = 2
 
-        self.min_pixelmove = -1
-        self.max_pixelmove = 1
+        # Pixel move
+        # (-1.5, -0.5) -> -1
+        # (-0.5, +0.5) -> 0
+        # (+0.5, +1.5) -> +1
+        self.min_pixelmove = -1.5
+        self.max_pixelmove = 1.5
 
         self.space_x_min = 0
         self.space_y_min = 0
@@ -124,16 +128,17 @@ class BallEnv(gym.Env):
             low=0,
             high=255,
             # shape=(self.input_num_channel, self.input_height, self.input_width),
-            shape=(self.num_sequence, self.space_y_max, self.space_x_max, self.input_num_channel),
+            shape=(self.space_y_max, self.space_x_max, self.input_num_channel),
+            # shape=(self.num_sequence, self.space_y_max, self.space_x_max, self.input_num_channel),
             # shape=(self.input_height, self.input_width),
             dtype=np.uint8
         )
 
-        self.state = np.zeros(shape=(8, 28, 28, 3))
+        # self.state = np.zeros(shape=(8, 28, 28, 3))
 
         self.seed()
         self.viewer = None
-        # self.state = None
+        self.state = None
 
         self.steps_beyond_done = None
 
@@ -163,14 +168,17 @@ class BallEnv(gym.Env):
         # x_dot = action[0][0]
         # y_dot = action[0][1]
 
-        x_pixelmove = int(round(action[0][0]))
+        x_move = action[0][0]
+        y_move = action[0][1]
+
+        x_pixelmove = int(round(x_move))
         # Clipping
         if x_pixelmove > 1:
             x_pixelmove = 1
         elif x_pixelmove < -1:
             x_pixelmove = -1
 
-        y_pixelmove = int(round(action[0][1]))
+        y_pixelmove = int(round(y_move))
         # Clipping
         if y_pixelmove > 1:
             y_pixelmove = 1
@@ -264,10 +272,10 @@ class BallEnv(gym.Env):
         self.x_previous = self.x
         self.y_previous = self.y
 
-        x = int(round(self.x))
-        y = int(round(self.y))
-        target_x = int(round(self.target_x))
-        target_y = int(round(self.target_y))
+        # x = int(round(self.x))
+        # y = int(round(self.y))
+        # target_x = int(round(self.target_x))
+        # target_y = int(round(self.target_y))
 
         # self.state = (x, x_dot, theta, theta_dot)
         # if x < 0 or y < 0 or target_x < 0 or target_y < 0:
@@ -277,22 +285,22 @@ class BallEnv(gym.Env):
 
         state_image_agent = cv2.circle(
             self.background_image,
-            center=(x, y),
+            center=(self.x, self.y),
             radius=self.object_radius,
             color=(0, 0, 255), # blue
             thickness=-1)
         state_image_target = cv2.circle(
             self.background_image,
-            center=(target_x, target_y),
+            center=(self.target_x, self.target_y),
             radius=self.object_radius,
             color=(255, 0, 0), # red
             thickness=-1)
         # plt.imshow(self.background_image)
         # plt.show()
         normalized_state_image = self.background_image / 255.0
-        # self.state = normalized_state_image
-        self.state = np.delete(arr=self.state, obj=0, axis=0)
-        self.state = np.concatenate((self.state, np.expand_dims(normalized_state_image, axis=0)), axis=0)
+        self.state = normalized_state_image
+        # self.state = np.delete(arr=self.state, obj=0, axis=0)
+        # self.state = np.concatenate((self.state, np.expand_dims(normalized_state_image, axis=0)), axis=0)
 
         # done = bool(
         #     self.x < self.space_x_min
@@ -353,34 +361,34 @@ class BallEnv(gym.Env):
         # self.y_dot = 0
         # self.target_x = np.random.uniform(low=1, high=self.space_x_max)
         # self.target_y = np.random.uniform(low=1, high=self.space_y_max)
-        self.target_x = self.space_x_max / 2.0
-        self.target_y = self.space_y_max / 2.0
-        self.x = self.target_x + np.random.uniform(low=-12.0, high=12.0)
-        self.y = self.target_y + np.random.uniform(low=-12.0, high=12.0)
+        self.target_x = int(round(self.space_x_max / 2.0))
+        self.target_y = int(round(self.space_y_max / 2.0))
+        self.x = self.target_x + int(round(np.random.uniform(low=-12.0, high=12.0)))
+        self.y = self.target_y + int(round(np.random.uniform(low=-12.0, high=12.0)))
         # self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
-        x = int(round(self.x))
-        y = int(round(self.y))
-        target_x = int(round(self.target_x))
-        target_y = int(round(self.target_y))
+        # x = int(round(self.x))
+        # y = int(round(self.y))
+        # target_x = int(round(self.target_x))
+        # target_y = int(round(self.target_y))
 
         state_image_agent = cv2.circle(
             self.background_image,
-            center=(x, y),
+            center=(self.x, self.y),
             radius=self.object_radius,
             color=(0, 0, 255),  # blue
             thickness=-1)
         state_image_target = cv2.circle(
             self.background_image,
-            center=(target_x, target_y),
+            center=(self.target_x, self.target_y),
             radius=self.object_radius,
             color=(255, 0, 0),  # red
             thickness=-1)
         # plt.imshow(self.background_image)
         # plt.show()
         normalized_state_image = self.background_image / 255.0
-        # self.state = normalized_state_image
-        self.state = np.delete(arr=self.state, obj=0, axis=0)
-        self.state = np.concatenate((self.state, np.expand_dims(normalized_state_image, axis=0)), axis=0)
+        self.state = normalized_state_image
+        # self.state = np.delete(arr=self.state, obj=0, axis=0)
+        # self.state = np.concatenate((self.state, np.expand_dims(normalized_state_image, axis=0)), axis=0)
         self.steps_beyond_done = None
 
         return np.array(self.state, dtype=np.float32)
